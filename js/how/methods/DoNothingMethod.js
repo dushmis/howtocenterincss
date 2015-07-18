@@ -3,6 +3,7 @@
 var Method = require('./Method');
 var Requirement = require('./Requirement');
 var Options = require('../Options');
+var React = require('react');
 
 var invariant = require('invariant');
 
@@ -31,24 +32,22 @@ class DoNothingMethod extends Method {
     content: Options.Content,
     container: Options.Container,
     horizontalAlignment: Options.HorizontalAlignment,
-    verticalAlignment: Options.VerticalAlignment
-  ): ReactElement {
+    verticalAlignment: Options.VerticalAlignment,
+    browserSupport: Options.BrowserSupport
+  ): { parent: ReactElement; middle: ?ReactElement; child: mixed; } {
     var parentStyles = {};
     parentStyles.position = 'relative';
     var childStyles = {};
     childStyles.position = 'absolute';
 
-    var child;
-    if (content.text) {
-      child = this.getTextContent();
-    } else {
-      child = <div />;
-    }
-    return (
+    var child = this.getContent(content);
+
+    var parent =
       <div>
         {child}
-      </div>
-    );
+      </div>;
+
+    return { parent: parent, middle: null, child: child };
   }
 }
 

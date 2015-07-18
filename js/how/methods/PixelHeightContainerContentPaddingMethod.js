@@ -3,6 +3,7 @@
 var Method = require('./Method');
 var Requirement = require('./Requirement');
 var Options = require('../Options');
+var React = require('react');
 
 var invariant = require('invariant');
 
@@ -31,15 +32,15 @@ class PixelHeightContainerContentPaddingMethod extends Method {
     content: Options.Content,
     container: Options.Container,
     horizontalAlignment: Options.HorizontalAlignment,
-    verticalAlignment: Options.VerticalAlignment
-  ): ReactElement {
+    verticalAlignment: Options.VerticalAlignment,
+    browserSupport: Options.BrowserSupport
+  ): { parent: ReactElement; middle: ?ReactElement; child: mixed; } {
     var containerHeight = container.height;
     invariant(containerHeight, 'Require container height');
     var contentHeight = content.height;
     invariant(contentHeight, 'Require content height');
 
     var parentStyles = {};
-    parentStyles.height = containerHeight.toString();
 
     var heightDiff = containerHeight.subtract(contentHeight);
     if (verticalAlignment !== Options.VerticalAlignment.TOP) {
@@ -49,34 +50,36 @@ class PixelHeightContainerContentPaddingMethod extends Method {
       } else if (verticalAlignment === Options.VerticalAlignment.BOTTOM) {
         paddingTop = heightDiff;
       }
+      invariant(paddingTop, 'typechecker');
       parentStyles.paddingTop = paddingTop.toString();
-    }
 
+      var parentHeight = containerHeight.subtract(paddingTop);
+      parentStyles.height = parentHeight.toString();
+    }
 
     var child;
     if (content.text) {
-      child = this.getTextContent();
+      child = this.getContent(content);
       if (horizontalAlignment === Options.HorizontalAlignment.CENTER) {
         parentStyles.textAlign = 'center';
       } else if (horizontalAlignment === Options.HorizontalAlignment.RIGHT) {
         parentStyles.textAlign = 'right';
       }
     } else {
-      var childStyles = {};
-      childStyles.height = contentHeight.toString();
+      child = this.getContentWithDOM(content);
+      var childStyles = child.props.style;
       if (horizontalAlignment !== Options.HorizontalAlignment.LEFT) {
         childStyles.marginLeft = 'auto';
         if (horizontalAlignment === Options.HorizontalAlignment.CENTER) {
           childStyles.marginRight = 'auto';
         }
       }
-      child = <div style={childStyles} />;
     }
-    return (
+    var parent =
       <div style={parentStyles}>
         {child}
-      </div>
-    );
+      </div>;
+    return { parent: parent, middle: null, child: child };
   }
 }
 

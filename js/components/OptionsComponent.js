@@ -1,5 +1,7 @@
 /** @flow */
 
+var invariant = require('invariant');
+
 var React = require('react');
 var AlignmentComponent = require('./AlignmentComponent');
 var BrowserSupportComponent = require('./BrowserSupportComponent');
@@ -17,28 +19,54 @@ class OptionsComponent extends React.Component {
   _browserSupport: BrowserSupportComponent;
 
   getContent(): Options.Content {
-    return this._content.getContent();
+    var content = this._content.getContent();
+    invariant(content, 'No content');
+    return content;
   }
 
   getContainer(): Options.Container {
-    return this._container.getContainer();
+    var container = this._container.getContainer();
+    invariant(container, 'No container');
+    return container;
   }
 
   getHorizontalAlignment(): Options.HorizontalAlignment {
-    return this._alignment.getHorizontalAlignment();
+    var alignment = this._alignment.getHorizontalAlignment();
+    invariant(alignment, 'No horizontal alignment');
+    return alignment;
   }
 
   getVerticalAlignment(): Options.VerticalAlignment {
-    return this._alignment.getVerticalAlignment();
+    var alignment = this._alignment.getVerticalAlignment();
+    invariant(alignment, 'No vertical alignment');
+    return alignment;
+  }
+
+  getBrowserSupport(): Options.BrowserSupport {
+    return this._browserSupport.getBrowserSupport();
+  }
+
+  setOptions(
+    content: Options.Content,
+    container: Options.Container,
+    horizontalAlignment: Options.HorizontalAlignment,
+    verticalAlignment: Options.VerticalAlignment,
+    browserSupport: Options.BrowserSupport
+  ) {
+    this._content.setContent(content);
+    this._container.setContainer(container);
+    this._alignment.setHorizontalAlignment(horizontalAlignment);
+    this._alignment.setVerticalAlignment(verticalAlignment);
+    this._browserSupport.setBrowserSupport(browserSupport);
   }
 
   render(): ?ReactElement {
-    // TODO add browser support back in when we need it.
     return (
       <div>
         <ContentComponent ref={(c) => this._content = c} />
         <ContainerComponent ref={(c) => this._container = c} />
         <AlignmentComponent ref={(c) => this._alignment = c} />
+        <BrowserSupportComponent ref={(c) => this._browserSupport = c} />
       </div>
     );
   }

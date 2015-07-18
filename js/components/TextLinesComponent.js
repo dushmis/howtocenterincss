@@ -9,9 +9,10 @@ class TextLinesComponent extends React.Component {
   state: {
     lines: ?number;
   };
+  _radioList: RadioListComponent<bool>;
   _linesInput: React.Component;
 
-  constructor(props) {
+  constructor(props: mixed) {
     super(props);
     this.state = {
       lines: null,
@@ -22,8 +23,19 @@ class TextLinesComponent extends React.Component {
     return this.state.lines;
   }
 
+  setLines(lines: ?number) {
+    if (lines != null) {
+      this._radioList.select(true);
+      this._setLines(lines);
+    } else {
+      this._radioList.select(false);
+    }
+  }
+
   _handleTextLinesKnownChange(known: bool) {
-    this._setLines(known ? 1 : null);
+    if (!known) {
+      this._setLines(null);
+    }
   }
 
   _handleTextLinesChange() {
@@ -42,10 +54,12 @@ class TextLinesComponent extends React.Component {
     return (
       <div>
         <p>Do you know how many lines of text it'll be?</p>
-        <RadioListComponent onChange={this._handleTextLinesKnownChange.bind(this)}>
+        <RadioListComponent
+          ref={(c) => this._radioList = c}
+          onChange={this._handleTextLinesKnownChange.bind(this)}>
           <RadioComponent labelText="Yes" value={true}>
             <input
-              className="numeric"
+              className="numeric text"
               type="number"
               pattern="[0-9]*"
               ref={(c) => this._linesInput = c}

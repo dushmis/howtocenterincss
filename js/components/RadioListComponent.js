@@ -4,12 +4,12 @@ var React = require('react');
 var RadioComponent = require('./RadioComponent');
 var classnames = require('classnames');
 
-class RadioListComponent extends React.Component {
+class RadioListComponent<T> extends React.Component {
   state: {
     selectedOption: ?RadioComponent;
   };
 
-  constructor(props) {
+  constructor(props: mixed) {
     super(props);
 
     this.state = {
@@ -17,7 +17,7 @@ class RadioListComponent extends React.Component {
     };
   }
 
-  getValue(): ?mixed {
+  getValue(): ?T {
     if (this.state.selectedOption) {
       return this.state.selectedOption.props.value;
     }
@@ -38,14 +38,16 @@ class RadioListComponent extends React.Component {
   }
 
   _selectOption(option: ?RadioComponent) {
-    if (this.state.selectedOption) {
-      this.state.selectedOption.setIsSelected(false);
-    }
-    if (option) {
-      option.setIsSelected(true);
-    }
-    this.setState({
-      selectedOption: option,
+    this.setState((prevState, currentProps) => {
+      if (prevState.selectedOption) {
+        prevState.selectedOption.setIsSelected(false);
+      }
+      if (option) {
+        option.setIsSelected(true);
+      }
+      return {
+        selectedOption: option,
+      };
     });
     if (this.props.onChange) {
       this.props.onChange(option ? option.props.value : null);
@@ -54,6 +56,27 @@ class RadioListComponent extends React.Component {
 
   clearSelection() {
     this._selectOption(null);
+  }
+
+  select(value: T) {
+    var childrenRefKeys = Object.keys(this.refs);
+    for (var i = 0; i < childrenRefKeys.length; i++) {
+      var child = this.refs[childrenRefKeys[i]];
+      if (child instanceof RadioComponent) {
+        if (this._compareValues(child.props.value, value)) {
+          this._selectOption(child);
+          return;
+        }
+      }
+    }
+    throw new Error('No value found for ' + value);
+  }
+
+  _compareValues(value1: T, value2: T): bool {
+    if (this.props.compareValues) {
+      return this.props.compareValues(value1, value2);
+    }
+    return value1 === value2;
   }
 
   render(): ?ReactElement {
@@ -79,6 +102,7 @@ class RadioListComponent extends React.Component {
   }
 }
 RadioListComponent.propTypes = {
+  compareValues: React.PropTypes.func,
   onChange: React.PropTypes.func,
   direction: React.PropTypes.oneOf(['vertical', 'horizontal']),
 };

@@ -1,10 +1,15 @@
 /* @flow */
 
+var invariant = require('invariant');
+
 var Method = require('./Method');
 var Requirement = require('./Requirement');
 var Options = require('../Options');
+var React = require('react');
 
 var c = require('../checks');
+
+var IE9 = new Options.BrowserVersionRequired(Options.Browser.IE, '9');
 
 class SingleLineTextLineHeightMethod extends Method {
 
@@ -20,8 +25,27 @@ class SingleLineTextLineHeightMethod extends Method {
       ),
       new Requirement(
         'Content has single line of text',
-        c.checkContent((content) => content.text && content.text.lines === 1)
+        c.checkContentText((text) => text.lines === 1)
       ),
+      Requirement.any([
+        new Requirement(
+          'Content is aligned at the top or middle',
+          c.checkAnyVerticalAlignment([
+            Options.VerticalAlignment.TOP,
+            Options.VerticalAlignment.MIDDLE,
+          ])
+        ),
+        Requirement.all([
+          new Requirement(
+            'Content is aligned at the bottom',
+            c.checkVerticalAlignment(Options.VerticalAlignment.BOTTOM)
+          ),
+          new Requirement(
+            'Content has font-size',
+            c.checkContentText(c.requireFontSizeExists)
+          ),
+        ]),
+      ]),
     ]);
   }
 
@@ -29,8 +53,9 @@ class SingleLineTextLineHeightMethod extends Method {
     content: Options.Content,
     container: Options.Container,
     horizontalAlignment: Options.HorizontalAlignment,
-    verticalAlignment: Options.VerticalAlignment
-  ): ReactElement {
+    verticalAlignment: Options.VerticalAlignment,
+    browserSupport: Options.BrowserSupport
+  ): { parent: ReactElement; middle: ?ReactElement; child: mixed; } {
     var styles = {};
     if (horizontalAlignment === Options.HorizontalAlignment.CENTER) {
       styles.textAlign = 'center';
@@ -39,18 +64,36 @@ class SingleLineTextLineHeightMethod extends Method {
     }
 
     if (verticalAlignment !== Options.VerticalAlignment.TOP) {
-      styles.lineHeight = container.height.toString();
+      var containerHeight = container.height;
+      invariant(containerHeight, 'Must have container height');
+
       if (verticalAlignment === Options.VerticalAlignment.MIDDLE) {
-        // Default vertical alignment is middle
+        styles.lineHeight = containerHeight.toString();
       } else if (verticalAlignment === Options.VerticalAlignment.BOTTOM) {
-        styles.verticalAlign = 'bottom';
+        var text = content.text;
+        invariant(text, 'Must have content text');
+        var fontSize = text.fontSize;
+        invariant(fontSize, 'Must have content text font size');
+
+        styles.lineHeight =
+          containerHeight.multiply(2).
+          subtract(fontSize);
+        styles.height = containerHeight.toString();
+
+        // For IE9 and below, the container div doesn't automatically hide the
+        // empty part of the line height
+        if (browserSupport.requiresBrowserVersion(IE9)) {
+          styles.overflow = 'hidden';
+        }
       }
     }
-    return (
+
+    var child = this.getContent(content);
+    var parent =
       <div style={styles}>
-        {this.getTextContent()}
-      </div>
-    );
+        {child}
+      </div>;
+    return { parent: parent, middle: null, child: child };
   }
 }
 

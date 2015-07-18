@@ -13,7 +13,7 @@ class LengthComponent extends React.Component {
   _valueInput: React.Component;
   _radioList: RadioListComponent;
 
-  constructor(props) {
+  constructor(props: mixed) {
     super(props);
     this.state = { value: null, type: null };
   }
@@ -23,6 +23,18 @@ class LengthComponent extends React.Component {
       return null;
     }
     return new Options.Length(this.state.value, this.state.type);
+  }
+
+  setLength(length: Options.Length) {
+    this.setState({
+      value: length.value,
+      type: length.lengthType,
+    });
+    this._radioList.select(length.lengthType);
+  }
+
+  selectDefaultType() {
+    this._radioList.select(Options.LengthType.PIXEL);
   }
 
   _handleValueChange() {
@@ -57,7 +69,7 @@ class LengthComponent extends React.Component {
     return (
       <div>
         <input
-          className="numeric"
+          className="numeric text"
           type="number"
           pattern="[0-9]*"
           ref={(c) => this._valueInput = c}

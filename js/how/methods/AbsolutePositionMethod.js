@@ -3,6 +3,7 @@
 var Method = require('./Method');
 var Requirement = require('./Requirement');
 var Options = require('../Options');
+var React = require('react');
 
 var invariant = require('invariant');
 
@@ -28,8 +29,11 @@ class AbsolutePositionMethod extends Method {
           ),
         ]),
         new Requirement(
-          'Horizontally right aligned',
-          c.checkHorizontalAlignment(Options.HorizontalAlignment.RIGHT)
+          'Horizontally left or right aligned',
+          c.checkAnyHorizontalAlignment([
+            Options.HorizontalAlignment.LEFT,
+            Options.HorizontalAlignment.RIGHT,
+          ])
         ),
       ]),
       Requirement.any([
@@ -44,8 +48,11 @@ class AbsolutePositionMethod extends Method {
           ),
         ]),
         new Requirement(
-          'Vertically bottom aligned',
-          c.checkVerticalAlignment(Options.VerticalAlignment.BOTTOM)
+          'Vertically top or bottom aligned',
+          c.checkAnyVerticalAlignment([
+            Options.VerticalAlignment.TOP,
+            Options.VerticalAlignment.BOTTOM,
+          ])
         ),
       ]),
     ]);
@@ -55,11 +62,18 @@ class AbsolutePositionMethod extends Method {
     content: Options.Content,
     container: Options.Container,
     horizontalAlignment: Options.HorizontalAlignment,
-    verticalAlignment: Options.VerticalAlignment
-  ): ReactElement {
+    verticalAlignment: Options.VerticalAlignment,
+    browserSupport: Options.BrowserSupport
+  ): { parent: ReactElement; middle: ?ReactElement; child: mixed; } {
     var parentStyles = {};
     parentStyles.position = 'relative';
-    var childStyles = {};
+
+    var child = this.getContentWithDOM(content, true /*requireBlock*/);
+
+    var childStyles = child.props.style;
+    if (!childStyles) {
+      childStyles = child.props.style = {};
+    }
     childStyles.position = 'absolute';
 
     var contentWidth = content.width;
@@ -80,35 +94,14 @@ class AbsolutePositionMethod extends Method {
       childStyles.bottom = '0';
     }
 
-    if (contentWidth) {
-      childStyles.width = contentWidth.toString();
-    }
-    if (contentHeight) {
-      childStyles.height = contentHeight.toString();
-    }
+    // TODO have to wrap the text in an inner div and extend it to 100% width
+    // in order to center or right align.
 
-    var containerWidth = container.width;
-    var containerHeight = container.height;
-    if (containerWidth) {
-      parentStyles.width = containerWidth.toString();
-    }
-    if (containerHeight) {
-      parentStyles.height = containerHeight.toString();
-    }
-
-    var child;
-    if (content.text) {
-      // TODO have to wrap the text in an inner div and extend it to 100% width
-      // in order to center or right align.
-      child = this.getTextContent();
-    } else {
-      child = <div style={childStyles} />;
-    }
-    return (
+    var parent =
       <div style={parentStyles}>
         {child}
-      </div>
-    );
+      </div>;
+    return { parent: parent, middle: null, child: child };
   }
 }
 
